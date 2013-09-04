@@ -36,4 +36,10 @@ post:
 		hg add -v $$file; \
 		vim +$$ $$file'
 
+deploy: site
+	./site clean
+	ln -s ../audhumla _site
+	./site build
+	rm _site
+
 .PHONY: build check clean preview rebuild server post
