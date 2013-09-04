@@ -38,7 +38,7 @@ main = hakyll $ do -- {
       setExtension "html" -- }
     compile $ do -- {
       let getPosts = recentFirst =<< loadAll "posts/*"
-      let getRecent = fmap (take 10) getPosts
+      let getRecent = fmap (take 3) getPosts
       let indexContext = -- {{{
             listField "posts" postContext getPosts        `mappend`
             listField "recentposts" postContext getRecent `mappend`

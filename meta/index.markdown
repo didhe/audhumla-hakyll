@@ -12,7 +12,7 @@ Welcome to my blog!
 
 I've reproduced a list of recent posts here for your reading pleasure:
 
-## Posts
+## Recent Posts
 
 $for(recentposts)$
 - [$title$]($url$) - $date$$endfor$
