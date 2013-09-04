@@ -2,9 +2,14 @@
 {-# LANGUAGE OverloadedStrings #-}
 import Hakyll
 
+import Control.Monad
+import Data.List
 import Data.Monoid
 import Text.Pandoc
 --------------------------------------------------------------------------------
+
+itemsPerPage :: Integral a => a
+itemsPerPage = 3
 
 main :: IO ()
 main = hakyll $ do -- {
@@ -20,6 +25,7 @@ main = hakyll $ do -- {
     route $ setExtension "html"
     compile $ withPandocOptions pandocCompilerWith -- {
       >>= loadAndApplyTemplate "templates/post.html"    postContext
+      >>= saveSnapshot "post"
       >>= loadAndApplyTemplate "templates/default.html" postContext
       >>= relativizeUrls -- }}
 
@@ -37,11 +43,15 @@ main = hakyll $ do -- {
       gsubRoute "^meta/" (const "")  `composeRoutes`
       setExtension "html" -- }
     compile $ do -- {
-      let getPosts = recentFirst =<< loadAll "posts/*"
-      let getRecent = fmap (take 3) getPosts
-      let indexContext = -- {{{
-            listField "posts" postContext getPosts        `mappend`
-            listField "recentposts" postContext getRecent `mappend`
+      let -- {{
+          getAllPosts = do -- {
+            posts <- loadAllSnapshots "posts/*" "post"
+            recentFirst posts -- }
+          getRecent = fmap (take itemsPerPage) getAllPosts
+          indexContext = -- {
+            listField "allposts" postContext getAllPosts  <>
+            listField "pageposts" postContext getRecent <>
+            constField "nextpage" "2" <>
             worldContext -- }}}
       getResourceBody -- {
         >>= applyAsTemplate indexContext
@@ -49,22 +59,73 @@ main = hakyll $ do -- {
         >>= loadAndApplyTemplate "templates/default.html" indexContext
         >>= relativizeUrls -- }}}
 
+  paginate itemsPerPage $ \maxPage page xs -> do -- {
+    create [fromFilePath $ "page" ++ show page ++ ".html"] $ do -- {
+      route idRoute
+      compile $ do -- {
+        let -- {{
+            snaps = mapM (`loadSnapshot` "post") xs
+            title = "Page " ++ show page ++ " of " ++ show maxPage
+            prev 1 = Nothing
+            prev n = Just $ -- {
+              constField "prevpage" (show (n-1)) <>
+              listField "headpages" worldContext -- {
+                (mapM (makeItem . show) [1..n-2]) -- }}
+            next n -- {
+              | n == maxPage = Nothing
+              | True = Just $ -- {
+                constField "nextpage" (show (n+1)) <>
+                listField "tailpages" worldContext -- {
+                  (mapM (makeItem . show) [n+2..maxPage]) -- }}}
+            pagesContext = -- {
+              constField "thispage" (show page) <>
+              prev page <?>
+              next page <?>
+              listField "pageposts" postContext snaps <>
+              constField "title" title <>
+              worldContext -- }}}
+        makeItem "" -- {
+          >>= loadAndApplyTemplate "templates/pages.html" pagesContext
+          >>= loadAndApplyTemplate "templates/default.html" pagesContext
+          >>= relativizeUrls -- }}}}
+
   match "templates/*" $ compile templateCompiler -- }
 
 
 --------------------------------------------------------------------------------
+
+maypend :: Monoid a => Maybe a -> a -> a
+maypend Nothing b = b
+maypend (Just a) b = a <> b
+
+(<?>) :: Monoid a => Maybe a -> a -> a
+(<?>) = maypend
+infixr 6 `maypend`, <?>
+
+paginate :: Int -> (Int -> Int -> [Identifier] -> Rules a) -> Rules ()
+paginate per go = do -- {{
+    posts <- fmap (reverse . sort) $ getMatches "posts/*"
+    let -- {{
+        poparts = parts posts
+        maxPage = length poparts -- }}
+    zipWithM_ (go maxPage) [1..] poparts -- }
+  where parts = takeWhile (not . null) -- {{{{{{
+              . map (take per)
+              . zipWith drop [0,per..]
+              . repeat -- }}}}}}}
+
 worldContext :: Context String
 worldContext = -- {
-  constField "site" "audhumla" `mappend`
+  constField "site" "audhumla" <>
   defaultContext -- }
 
 postContext :: Context String
 postContext = -- {
-  dateField "date" "%e %B %Y" `mappend`
+  dateField "date" "%e %B %Y" <>
   worldContext -- }
 
 withPandocOptions :: (ReaderOptions -> WriterOptions -> a) -> a
-withPandocOptions f = f readerOptions writerOptions
+withPandocOptions f = f readerOptions writerOptions -- {
   where readerOptions = defaultHakyllReaderOptions -- {{{
         writerOptions = defaultHakyllWriterOptions -- {
           { writerHtml5 = True } -- }}}}}

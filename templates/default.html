@@ -1,8 +1,9 @@
-<!DOCTYPE html>
+<!DOCTYPE HTML PUBLIC '-//W3C//DTD HTML 4.01//EN' 'http://www.w3.org/TR/html4/strict.dtd'>
+<!--DOCTYPE html-->
 <html lang='en'>
   <head>
-    <meta charset='utf-8'>
-    <link rel='stylesheet' type="text/css" href="/css/default.css" />
+    <!--<meta charset='utf-8'>-->
+    <link rel='stylesheet' type='text/css' href='/css/default.css'>
     <title>$title$ - $site$</title>
   </head>
   <body>
@@ -19,10 +20,11 @@
       </div>
     </div>
 
-    <div id='content'>
+    <div id='content'>$if(suppresstitle)$
+      $else$
       <h1>$title$</h1>
 
-      $body$
+      $endif$$body$
     </div>
 
     <div id='footer'>

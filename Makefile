@@ -1,7 +1,7 @@
 main: build
 
 site: site.hs
-	ghc --make site
+	ghc --make site -Wall
 
 clean: site.hs
 	runghc site.hs clean

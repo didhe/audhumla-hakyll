@@ -4,5 +4,5 @@ title: Archives
 
 Here you can find all my previous posts:
 
-$for(posts)$
+$for(allposts)$
 - [$title$]($url$) - $date$$endfor$
