@@ -38,8 +38,8 @@ post:
 
 deploy: site
 	./site clean
-	ln -s ../audhumla _site
+	hg clone ../audhumla _site
 	./site build
-	rm _site
+	(cd _site; hg ci -A && hg push)
 
 .PHONY: build check clean preview rebuild server post
