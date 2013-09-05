@@ -39,6 +39,7 @@ post:
 deploy: site
 	./site clean
 	hg clone ../audhumla _site
+	(cd _site; hg up -r gh-pages)
 	./site build
 	(cd _site; hg ci -A && hg push)
 
