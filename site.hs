@@ -26,6 +26,7 @@ main = hakyll $ do -- {
     compile $ withPandocOptions pandocCompilerWith -- {
       >>= loadAndApplyTemplate "templates/post.html"    postContext
       >>= saveSnapshot "post"
+      >>= loadAndApplyTemplate "templates/postpage.html" postContext
       >>= loadAndApplyTemplate "templates/default.html" postContext
       >>= relativizeUrls -- }}
 
